@@ -3,1865 +3,659 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>매매일지</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<title>트레이딩 비중 계산기</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0a0b0e;
-  --surface: #111318;
-  --surface2: #181c24;
-  --surface3: #1e2330;
-  --border: #252a38;
-  --border2: #2e3448;
-  --text: #e8ecf4;
-  --text2: #8b94aa;
-  --text3: #555e78;
-  --accent: #4f8ef7;
-  --accent2: #2563d4;
-  --green: #22c55e;
-  --red: #ef4444;
-  --yellow: #eab308;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Noto Sans KR', sans-serif;
-  background: var(--bg); color: var(--text);
-  min-height: 100vh; line-height: 1.6;
-}
+  :root {
+    --bg: #0a0c0f;
+    --panel: #0f1318;
+    --border: #1e2530;
+    --border-bright: #2e3d50;
+    --accent: #00e5ff;
+    --accent-dim: rgba(0, 229, 255, 0.08);
+    --accent-glow: rgba(0, 229, 255, 0.25);
+    --danger: #ff3d5a;
+    --danger-dim: rgba(255, 61, 90, 0.08);
+    --success: #00e09e;
+    --text: #c8d8e8;
+    --text-dim: #5a7088;
+    --text-bright: #eaf4ff;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Noto Sans KR', sans-serif;
+  }
 
-/* ── SETUP SCREEN ── */
-#setup-screen {
-  position: fixed; inset: 0; z-index: 500;
-  background: var(--bg);
-  display: flex; align-items: center; justify-content: center;
-  padding: 24px;
-}
-.setup-box {
-  width: 100%; max-width: 540px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 32px;
-}
-.setup-logo {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 18px; font-weight: 600; color: var(--accent);
-  margin-bottom: 8px;
-}
-.setup-box h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
-.setup-desc { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.7; }
-.setup-field { margin-bottom: 16px; }
-.setup-field label { display: block; font-size: 12px; color: var(--text3); margin-bottom: 6px; font-weight: 500; }
-.setup-input {
-  width: 100%; background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 8px; padding: 10px 12px; color: var(--text);
-  font-size: 13px; font-family: 'JetBrains Mono', monospace; outline: none;
-  transition: border-color 0.2s;
-}
-.setup-input:focus { border-color: var(--accent); }
-.setup-hint { font-size: 11px; color: var(--text3); margin-top: 5px; }
-.setup-btn {
-  width: 100%; padding: 12px; border-radius: 8px; border: none;
-  background: var(--accent); color: #fff; font-size: 14px; font-weight: 600;
-  cursor: pointer; transition: background 0.2s; margin-top: 8px;
-  font-family: 'Noto Sans KR', sans-serif;
-}
-.setup-btn:hover { background: var(--accent2); }
-#setup-error {
-  margin-top: 12px; padding: 10px 14px;
-  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
-  border-radius: 8px; font-size: 12px; color: #fca5a5; display: none;
-}
-.setup-note {
-  margin-top: 20px; padding: 14px 16px;
-  background: rgba(79,142,247,0.07); border: 1px solid rgba(79,142,247,0.18);
-  border-radius: 10px; font-size: 12px; color: var(--text2); line-height: 1.8;
-}
-.setup-note b { color: var(--text); }
-.setup-note pre {
-  margin-top: 8px; padding: 10px 12px;
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 6px; font-size: 11px; color: var(--accent);
-  font-family: 'JetBrains Mono', monospace;
-  white-space: pre-wrap; word-break: break-all;
-  user-select: all; cursor: text;
-}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── NAV ── */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 20px; height: 56px;
-  background: rgba(10,11,14,0.92); border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(12px);
-}
-.nav-logo { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--accent); }
-.nav-tabs { display: flex; gap: 2px; }
-.nav-tab {
-  padding: 6px 14px; border-radius: 6px; cursor: pointer;
-  font-size: 13px; font-weight: 500; transition: all 0.2s;
-  border: none; background: transparent; color: var(--text2);
-  font-family: 'Noto Sans KR', sans-serif;
-}
-.nav-tab:hover { color: var(--text); background: var(--surface2); }
-.nav-tab.active { background: var(--accent); color: #fff; }
-.nav-right { display: flex; align-items: center; gap: 10px; }
-.cloud-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
-.cloud-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
-.cloud-dot.err { background: var(--red); }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 16px;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 50% -10%, rgba(0,229,255,0.06) 0%, transparent 70%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  }
 
-/* ── MAIN ── */
-main { padding: 76px 20px 48px; max-width: 1160px; margin: 0 auto; }
-.page { display: none; }
-.page.active { display: block; }
+  .container {
+    width: 100%;
+    max-width: 640px;
+    animation: fadeIn 0.6s ease;
+  }
 
-/* ── TOAST ── */
-.toast-wrap { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-.toast {
-  padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
-  opacity: 0; transform: translateY(8px); transition: all 0.25s; border: 1px solid;
-}
-.toast.show { opacity: 1; transform: translateY(0); }
-.toast.ok  { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3);  color: #86efac; }
-.toast.err { background: rgba(239,68,68,0.12);  border-color: rgba(239,68,68,0.3);  color: #fca5a5; }
-.toast.inf { background: rgba(79,142,247,0.12); border-color: rgba(79,142,247,0.3); color: #93c5fd; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-/* ── SESSION BAR ── */
-.session-bar {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 18px; border-radius: 12px;
-  background: var(--surface); border: 1px solid var(--border);
-  margin-bottom: 16px; flex-wrap: wrap;
-}
-.session-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: all 0.3s; }
-.session-dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 1.5s infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
-.session-info { flex: 1; min-width: 160px; }
-.session-label { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
-.session-title-input {
-  background: transparent; border: none; outline: none;
-  color: var(--text); font-size: 15px; font-weight: 600;
-  font-family: 'Noto Sans KR', sans-serif; width: 100%;
-}
-.session-title-input::placeholder { color: var(--text3); font-weight: 400; }
-.btn {
-  padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
-  cursor: pointer; border: none; transition: all 0.2s; white-space: nowrap;
-  font-family: 'Noto Sans KR', sans-serif;
-}
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.btn-start { background: var(--green); color: #fff; }
-.btn-start:hover:not(:disabled) { background: #16a34a; }
-.btn-end { background: var(--red); color: #fff; }
-.btn-end:hover:not(:disabled) { background: #dc2626; }
-.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
-.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
 
-/* ── PASTE HINT ── */
-.paste-hint {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 8px 14px; border-radius: 8px; margin-bottom: 14px;
-  background: rgba(79,142,247,0.07); border: 1px solid rgba(79,142,247,0.15);
-  font-size: 12px; color: var(--text2);
-}
-.paste-hint kbd {
-  background: var(--surface3); border: 1px solid var(--border2);
-  border-radius: 4px; padding: 1px 6px;
-  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text);
-}
-.active-part-badge { font-weight: 600; padding: 2px 8px; border-radius: 4px; font-size: 11px; color: #fff; }
+  .header .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    opacity: 0.8;
+  }
 
-/* ── MINDSET MODAL ── */
-.mindset-overlay {
-  position: fixed; inset: 0; z-index: 250;
-  background: rgba(0,0,0,0.88); backdrop-filter: blur(6px);
-  display: flex; align-items: center; justify-content: center;
-  padding: 24px;
-  opacity: 0; pointer-events: none; transition: opacity 0.2s;
-}
-.mindset-overlay.open { opacity: 1; pointer-events: all; }
-.mindset-card {
-  width: 100%; max-width: 560px;
-  background: var(--surface); border: 1px solid var(--border2);
-  border-radius: 16px; overflow: hidden;
-  transform: scale(0.96); transition: transform 0.2s;
-}
-.mindset-overlay.open .mindset-card { transform: scale(1); }
-.mindset-card-header {
-  display: flex; align-items: center; gap: 12px;
-  padding: 16px 20px; border-bottom: 1px solid var(--border);
-  background: rgba(79,142,247,0.06);
-}
-.mindset-icon { font-size: 20px; }
-.mindset-card-header h3 { flex: 1; font-size: 15px; font-weight: 700; color: var(--text); }
-.mindset-edit-btn {
-  background: transparent; border: 1px solid var(--border2);
-  color: var(--text3); border-radius: 6px; padding: 4px 10px;
-  font-size: 11px; cursor: pointer; transition: all 0.15s;
-  font-family: 'Noto Sans KR', sans-serif;
-}
-.mindset-edit-btn:hover { background: var(--surface2); color: var(--text); }
-.mindset-body { padding: 22px 24px; }
-.mindset-text-display {
-  font-size: 14px; line-height: 1.9; color: var(--text2);
-  white-space: pre-wrap; min-height: 80px;
-}
-.mindset-text-display .empty-hint { color: var(--text3); font-size: 13px; font-style: italic; }
-.mindset-textarea {
-  width: 100%; background: var(--surface2); border: 1px solid var(--border2);
-  border-radius: 8px; padding: 12px 14px; color: var(--text);
-  font-size: 14px; line-height: 1.9; font-family: 'Noto Sans KR', sans-serif;
-  resize: vertical; min-height: 160px; outline: none;
-  transition: border-color 0.2s;
-}
-.mindset-textarea:focus { border-color: var(--accent); }
-.mindset-footer {
-  display: flex; gap: 10px; justify-content: flex-end;
-  padding: 14px 20px; border-top: 1px solid var(--border);
-}
-.mindset-save-btn {
-  padding: 8px 22px; border-radius: 8px; border: none;
-  background: var(--accent); color: #fff;
-  font-size: 13px; font-weight: 600; cursor: pointer;
-  transition: background 0.2s; font-family: 'Noto Sans KR', sans-serif;
-}
-.mindset-save-btn:hover { background: var(--accent2); }
-.mindset-start-btn {
-  padding: 8px 22px; border-radius: 8px; border: none;
-  background: var(--green); color: #fff;
-  font-size: 13px; font-weight: 600; cursor: pointer;
-  transition: background 0.2s; font-family: 'Noto Sans KR', sans-serif;
-}
-.mindset-start-btn:hover { background: #16a34a; }
-.mindset-cancel-btn {
-  padding: 8px 16px; border-radius: 8px;
-  background: transparent; color: var(--text3);
-  border: 1px solid var(--border2); font-size: 13px; cursor: pointer;
-  transition: all 0.15s; font-family: 'Noto Sans KR', sans-serif;
-}
-.mindset-cancel-btn:hover { background: var(--surface2); color: var(--text); }
+  .header h1 {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: -0.5px;
+  }
 
-/* mindset quick card on record page */
-.mindset-bar {
-  display: flex; align-items: flex-start; gap: 12px;
-  padding: 12px 16px; border-radius: 10px; margin-bottom: 16px;
-  background: rgba(79,142,247,0.05); border: 1px solid rgba(79,142,247,0.12);
-  cursor: pointer; transition: border-color 0.2s;
-}
-.mindset-bar:hover { border-color: rgba(79,142,247,0.3); }
-.mindset-bar-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-.mindset-bar-text { font-size: 12px; color: var(--text2); line-height: 1.7; flex: 1; white-space: pre-wrap; }
-.mindset-bar-edit { font-size: 11px; color: var(--text3); flex-shrink: 0; margin-top: 2px; }
+  .header .sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+  }
 
-/* ── PARTS GRID ── */
-.parts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-@media (max-width: 900px) { .parts-grid { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 560px) { .parts-grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
 
-.part-card {
-  background: var(--surface); border: 1.5px solid var(--border);
-  border-radius: 12px; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-}
-.part-card.paste-target { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,0.15); }
-.part-header { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--border); }
-.part-num { width: 22px; height: 22px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
-.part-name { font-size: 13px; font-weight: 500; flex: 1; }
-.part-meta { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
-.part-body { padding: 12px 14px; }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
+  }
 
-.paste-zone {
-  border: 1.5px dashed var(--border2); border-radius: 8px;
-  padding: 14px 10px; text-align: center;
-  transition: all 0.2s; margin-bottom: 10px; position: relative;
-  pointer-events: none;
-}
-.part-card.paste-target .paste-zone { border-color: var(--accent); background: rgba(79,142,247,0.05); }
-.paste-zone .uz-text { font-size: 11px; color: var(--text3); }
-.paste-zone .uz-sub { font-size: 10px; color: var(--text3); margin-top: 3px; opacity: 0.7; }
+  .card-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    opacity: 0.7;
+  }
 
-.uploading-overlay { position: absolute; inset: 0; background: rgba(10,11,14,0.75); display: flex; align-items: center; justify-content: center; border-radius: 6px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.spinner { width: 20px; height: 20px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  .field {
+    margin-bottom: 16px;
+  }
 
-/* ── STACK VIEWER ── */
-.stack-wrap {
-  position: relative; margin-bottom: 12px;
-  /* height set dynamically via padding-bottom trick on inner */
-}
-.stack-stage {
-  position: relative;
-  width: 100%;
-}
-/* ghost cards behind */
-.stack-ghost {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  border-radius: 8px; background: var(--surface3);
-  border: 1px solid var(--border2);
-  width: calc(100% - 16px);
-  pointer-events: none;
-}
-.stack-ghost-2 {
-  bottom: -10px; height: 12px;
-  opacity: 0.5;
-}
-.stack-ghost-1 {
-  bottom: -6px; height: 12px;
-  opacity: 0.75; width: calc(100% - 8px);
-}
-/* front card */
-.stack-front {
-  position: relative; z-index: 3;
-  width: 100%; border-radius: 8px; overflow: hidden;
-  border: 1.5px solid var(--accent);
-  cursor: pointer; background: var(--surface2);
-  transition: transform 0.15s;
-}
-.stack-front:hover { transform: translateY(-2px); }
-.stack-front img { width: 100%; height: auto; display: block; }
-.stack-nav {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 10px; background: var(--surface3);
-  border-top: 1px solid var(--border);
-}
-.stack-nav-btn {
-  background: var(--surface2); border: 1px solid var(--border2);
-  color: var(--text2); border-radius: 5px; padding: 3px 10px;
-  font-size: 11px; cursor: pointer; transition: all 0.15s;
-  font-family: 'JetBrains Mono', monospace;
-}
-.stack-nav-btn:hover:not(:disabled) { background: var(--border2); color: var(--text); }
-.stack-nav-btn:disabled { opacity: 0.3; cursor: default; }
-.stack-counter {
-  font-size: 11px; color: var(--text3);
-  font-family: 'JetBrains Mono', monospace;
-}
-.stack-del-btn {
-  background: transparent; border: none; color: var(--text3);
-  cursor: pointer; font-size: 12px; padding: 2px 6px;
-  transition: color 0.15s; border-radius: 4px;
-}
-.stack-del-btn:hover { color: var(--red); background: rgba(239,68,68,0.1); }
-.stack-empty { text-align: center; padding: 28px 10px; margin-bottom: 10px; }
-.stack-empty svg { opacity: 0.2; display: block; margin: 0 auto 6px; }
-.stack-empty p { font-size: 11px; color: var(--text3); }
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    font-family: var(--mono);
+  }
 
-.comment-box {
-  width: 100%; background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 6px; padding: 8px 10px; color: var(--text);
-  font-size: 12px; font-family: 'Noto Sans KR', sans-serif;
-  resize: vertical; min-height: 56px; outline: none; transition: border-color 0.2s;
-}
-.comment-box:focus { border-color: var(--accent); }
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
 
-/* ── REVIEW SECTION (detail modal only) ── */
-.review-section {
-  border: 1.5px solid rgba(250,204,21,0.3);
-  border-radius: 12px; overflow: hidden; margin-top: 4px;
-}
-.review-header {
-  display: flex; align-items: center; gap: 10px;
-  padding: 11px 14px;
-  background: rgba(250,204,21,0.07);
-  border-bottom: 1px solid rgba(250,204,21,0.15);
-}
-.review-badge {
-  width: 22px; height: 22px; border-radius: 5px;
-  background: #ca8a04;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; flex-shrink: 0;
-}
-.review-title { font-size: 13px; font-weight: 600; flex: 1; color: #fde68a; }
-.review-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
-.review-stack { position: relative; margin-bottom: 4px; }
-.review-stack-stage { position: relative; width: 100%; }
-.review-ghost { position: absolute; left: 50%; transform: translateX(-50%); border-radius: 8px; background: var(--surface3); border: 1px solid rgba(250,204,21,0.15); width: calc(100% - 16px); pointer-events: none; }
-.review-ghost-2 { bottom: -10px; height: 12px; opacity: 0.4; }
-.review-ghost-1 { bottom: -6px; height: 12px; opacity: 0.65; width: calc(100% - 8px); }
-.review-front {
-  position: relative; z-index: 3; width: 100%; border-radius: 8px; overflow: hidden;
-  border: 1.5px solid rgba(250,204,21,0.5); cursor: pointer; background: var(--surface2);
-  transition: transform 0.15s;
-}
-.review-front:hover { transform: translateY(-2px); }
-.review-front img { width: 100%; height: auto; display: block; }
-.review-nav {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 10px; background: rgba(250,204,21,0.05);
-  border-top: 1px solid rgba(250,204,21,0.1);
-}
-.review-nav-btn {
-  background: var(--surface2); border: 1px solid rgba(250,204,21,0.2);
-  color: #fde68a; border-radius: 5px; padding: 3px 10px;
-  font-size: 11px; cursor: pointer; transition: all 0.15s;
-  font-family: 'JetBrains Mono', monospace;
-}
-.review-nav-btn:hover:not(:disabled) { background: rgba(250,204,21,0.1); }
-.review-nav-btn:disabled { opacity: 0.3; cursor: default; }
-.review-counter { font-size: 11px; color: #ca8a04; font-family: 'JetBrains Mono', monospace; }
-.review-del-btn { background: transparent; border: none; color: var(--text3); cursor: pointer; font-size: 12px; padding: 2px 6px; border-radius: 4px; }
-.review-del-btn:hover { color: var(--red); background: rgba(239,68,68,0.1); }
-.review-paste-zone {
-  border: 1.5px dashed rgba(250,204,21,0.25); border-radius: 8px;
-  padding: 14px 10px; text-align: center; transition: all 0.2s; position: relative;
-}
-.review-paste-zone.active { border-color: rgba(250,204,21,0.6); background: rgba(250,204,21,0.04); }
-.review-paste-zone p { font-size: 11px; color: #ca8a04; }
-.review-paste-zone .rp-sub { font-size: 10px; color: var(--text3); margin-top: 3px; }
-.review-text {
-  width: 100%; background: var(--surface2); border: 1px solid rgba(250,204,21,0.2);
-  border-radius: 8px; padding: 10px 12px; color: var(--text);
-  font-size: 13px; font-family: 'Noto Sans KR', sans-serif;
-  resize: vertical; min-height: 80px; outline: none; line-height: 1.7;
-  transition: border-color 0.2s;
-}
-.review-text:focus { border-color: rgba(250,204,21,0.5); }
-.review-text-display {
-  font-size: 13px; color: var(--text2); line-height: 1.7;
-  padding: 4px 0; white-space: pre-wrap;
-}
-.review-save-btn {
-  align-self: flex-end; padding: 7px 20px; border-radius: 7px; border: none;
-  background: #ca8a04; color: #fff; font-size: 12px; font-weight: 600;
-  cursor: pointer; transition: background 0.2s; font-family: 'Noto Sans KR', sans-serif;
-}
-.review-save-btn:hover { background: #a16207; }
-.review-uploading { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #ca8a04; }
+  .input-wrap .prefix {
+    position: absolute;
+    left: 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    pointer-events: none;
+    z-index: 1;
+  }
 
-/* ── LIST PAGE ── */
-.list-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.list-header h2 { font-size: 17px; font-weight: 600; flex: 1; }
-.list-count { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .input-wrap .suffix {
+    position: absolute;
+    right: 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
 
-/* ── WIN/LOSS STATS BAR ── */
-.stats-bar {
-  display: flex; align-items: center; gap: 20px;
-  padding: 14px 20px; border-radius: 12px;
-  background: var(--surface); border: 1px solid var(--border);
-  margin-bottom: 18px; flex-wrap: wrap; gap: 16px;
-}
-.stat-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.stat-value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
-.stat-label { font-size: 10px; color: var(--text3); font-weight: 500; letter-spacing: 0.05em; }
-.stat-divider { width: 1px; height: 32px; background: var(--border2); flex-shrink: 0; }
-.winrate-bar-wrap { flex: 1; min-width: 160px; }
-.winrate-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-bottom: 5px; }
-.winrate-bar-track {
-  height: 6px; border-radius: 99px; background: var(--surface3);
-  overflow: hidden; position: relative;
-}
-.winrate-bar-fill {
-  height: 100%; border-radius: 99px;
-  background: linear-gradient(90deg, var(--green), #16a34a);
-  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
-}
+  input[type="number"] {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 40px 11px 34px;
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text-bright);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -moz-appearance: textfield;
+  }
 
-/* ── JOURNAL LIST ── */
-.journal-list { display: flex; flex-direction: column; gap: 8px; }
-.journal-item {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: 13px 16px;
-  cursor: pointer; transition: all 0.2s;
-  display: flex; align-items: center; gap: 12px;
-}
-.journal-item:hover { border-color: var(--border2); background: var(--surface2); }
-.journal-item.win  { border-left: 3px solid var(--green); }
-.journal-item.loss { border-left: 3px solid var(--red); }
-.journal-item.be   { border-left: 3px solid var(--text3); }
-.journal-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text3); width: 28px; flex-shrink: 0; text-align: center; }
-.journal-info { flex: 1; min-width: 0; }
-.journal-title { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
-.journal-date { font-size: 11px; color: var(--text3); }
-.part-dots { display: flex; gap: 4px; }
-.part-dot { width: 7px; height: 7px; border-radius: 50%; opacity: 0.2; }
-.part-dot.has { opacity: 1; }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
 
-/* win/loss toggle buttons */
-.wl-btns { display: flex; gap: 4px; flex-shrink: 0; }
-.wl-btn {
-  padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;
-  cursor: pointer; border: 1.5px solid var(--border2);
-  background: transparent; color: var(--text3);
-  transition: all 0.15s; font-family: 'Noto Sans KR', sans-serif;
-  white-space: nowrap;
-}
-.wl-btn:hover { border-color: var(--border2); background: var(--surface2); }
-.wl-btn.win-active  { background: rgba(34,197,94,0.15);  border-color: var(--green); color: var(--green); }
-.wl-btn.loss-active { background: rgba(239,68,68,0.15);  border-color: var(--red);   color: var(--red); }
-.wl-btn.be-active   { background: rgba(85,94,120,0.2);   border-color: var(--text3); color: var(--text2); }
+  input[type="number"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+  }
 
-.journal-del { background: transparent; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 4px; opacity: 0; transition: all 0.15s; }
-.journal-item:hover .journal-del { opacity: 1; }
-.journal-del:hover { color: var(--red); }
+  input[type="number"].no-prefix {
+    padding-left: 12px;
+  }
 
-/* ── FILTER PAGE ── */
-.filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
-.filter-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border2); background: transparent; color: var(--text2); transition: all 0.2s; font-family: 'Noto Sans KR', sans-serif; }
-.filter-btn:hover { color: var(--text); background: var(--surface2); }
-.filter-btn.active { color: #fff; border-color: transparent; }
+  /* Toggle switch */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+  }
 
-.filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.filter-card { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; background: var(--surface); }
-.filter-card:hover { border-color: var(--border2); transform: translateY(-2px); }
-.filter-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; min-height: 158px; }
-.filter-card-no-img { width: 100%; aspect-ratio: 16/9; background: var(--surface2); display: flex; align-items: center; justify-content: center; color: var(--text3); font-size: 11px; }
-.filter-card-meta { padding: 10px 12px; }
-.filter-card-meta .fc-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.filter-card-meta .fc-date { font-size: 12px; color: var(--text3); }
+  .toggle-btn {
+    flex: 1;
+    padding: 9px;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-dim);
+    transition: all 0.2s;
+  }
 
-/* ── DETAIL MODAL ── */
-.modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.87); backdrop-filter: blur(4px); display: flex; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-.modal-overlay.open { opacity: 1; pointer-events: all; }
-.modal { width: 100%; max-width: 820px; background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; overflow: hidden; transform: translateY(16px); transition: transform 0.2s; margin-bottom: 24px; }
-.modal-overlay.open .modal { transform: translateY(0); }
-.modal-header { display: flex; align-items: center; gap: 12px; padding: 15px 20px; border-bottom: 1px solid var(--border); }
-.modal-header h3 { flex: 1; font-size: 15px; font-weight: 600; }
-.modal-close { width: 30px; height: 30px; border-radius: 6px; background: var(--surface2); border: none; color: var(--text2); cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-.modal-close:hover { background: var(--surface3); color: var(--text); }
-.modal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .toggle-btn.active {
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
 
-.detail-part { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-.detail-part-header { display: flex; align-items: center; gap: 10px; padding: 9px 13px; background: var(--surface2); border-bottom: 1px solid var(--border); }
-.detail-part-imgs { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; }
-.detail-img-wrap { position: relative; width: 100%; border-radius: 7px; overflow: hidden; border: 1.5px solid var(--border2); cursor: pointer; }
-.detail-img-wrap.latest { border-color: var(--accent); }
-.detail-img-wrap img { width: 100%; display: block; }
-.detail-img-tag { position: absolute; top: 4px; right: 4px; background: var(--accent); color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; }
-.detail-img-tag.old { background: var(--surface3); }
-.detail-part-comment { padding: 8px 13px 11px; font-size: 12px; color: var(--text2); border-top: 1px solid var(--border); line-height: 1.6; }
+  /* Direction toggle */
+  .direction-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
 
-/* ── LIGHTBOX ── */
-.lightbox { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.96); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.15s; }
-.lightbox.open { opacity: 1; pointer-events: all; }
-.lightbox img { max-width: 92vw; max-height: 90vh; object-fit: contain; border-radius: 4px; }
-.lb-close { position: absolute; top: 16px; right: 20px; background: rgba(255,255,255,0.1); border: none; color: #fff; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-.lb-close:hover { background: rgba(255,255,255,0.2); }
+  .dir-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
 
-.empty-state { text-align: center; padding: 56px 20px; color: var(--text3); font-size: 13px; }
-.loading-msg { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+  .dir-btn.long { color: var(--success); }
+  .dir-btn.long.active {
+    background: rgba(0, 224, 158, 0.1);
+    border-color: var(--success);
+    box-shadow: 0 0 10px rgba(0,224,158,0.15);
+  }
 
-/* ── TAGS ── */
-.tag-input-wrap {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 8px 10px;
-  background: var(--surface2); border: 1px solid rgba(250,204,21,0.2);
-  border-radius: 8px; cursor: text; min-height: 38px;
-  transition: border-color 0.2s;
-}
-.tag-input-wrap:focus-within { border-color: rgba(250,204,21,0.5); }
-.tag-chip {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(250,204,21,0.12); border: 1px solid rgba(250,204,21,0.3);
-  color: #fde68a; border-radius: 20px; padding: 2px 10px;
-  font-size: 12px; font-weight: 500; white-space: nowrap;
-}
-.tag-chip-del {
-  background: none; border: none; color: #ca8a04; cursor: pointer;
-  font-size: 13px; padding: 0; line-height: 1; margin-left: 2px;
-}
-.tag-chip-del:hover { color: var(--red); }
-.tag-input-field {
-  border: none; background: transparent; outline: none;
-  color: var(--text); font-size: 12px; font-family: 'Noto Sans KR', sans-serif;
-  min-width: 80px; flex: 1;
-}
-.tag-input-field::placeholder { color: var(--text3); }
-.tag-save-row { display: flex; justify-content: flex-end; }
+  .dir-btn.short { color: var(--danger); }
+  .dir-btn.short.active {
+    background: rgba(255, 61, 90, 0.1);
+    border-color: var(--danger);
+    box-shadow: 0 0 10px rgba(255,61,90,0.15);
+  }
 
-/* filter page tag section */
-.tag-section { margin-bottom: 24px; }
-.tag-section-title {
-  font-size: 12px; color: var(--text3); font-weight: 600;
-  letter-spacing: 0.06em; margin-bottom: 10px;
-}
-.tag-filter-cloud { display: flex; gap: 8px; flex-wrap: wrap; }
-.tag-filter-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 14px; border-radius: 20px; cursor: pointer;
-  font-size: 12px; font-weight: 600;
-  background: var(--surface2); border: 1.5px solid var(--border2);
-  color: var(--text2); transition: all 0.15s;
-}
-.tag-filter-chip:hover { border-color: #ca8a04; color: #fde68a; }
-.tag-filter-chip.active {
-  background: rgba(250,204,21,0.12); border-color: #ca8a04; color: #fde68a;
-}
-.tag-filter-chip .tag-count {
-  background: var(--surface3); border-radius: 10px;
-  padding: 0 6px; font-size: 10px; color: var(--text3);
-  font-family: 'JetBrains Mono', monospace;
-}
-.tag-filter-chip.active .tag-count { background: rgba(250,204,21,0.2); color: #ca8a04; }
-.tag-journal-grid { display: flex; flex-direction: column; gap: 8px; }
-.tag-journal-item {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: 14px 18px; cursor: pointer;
-  transition: all 0.2s; display: flex; align-items: center; gap: 14px;
-}
-.tag-journal-item:hover { border-color: var(--border2); background: var(--surface2); }
-.tag-journal-title { font-size: 14px; font-weight: 500; flex: 1; }
-.tag-journal-date { font-size: 11px; color: var(--text3); margin-left: auto; }
-.tag-journal-tags { display: flex; gap: 4px; flex-wrap: wrap; }
-.tag-mini {
-  font-size: 10px; padding: 1px 7px; border-radius: 10px;
-  background: rgba(250,204,21,0.1); border: 1px solid rgba(250,204,21,0.25);
-  color: #ca8a04;
-}
+  .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Results */
+  .result-card {
+    background: var(--panel);
+    border: 1px solid var(--border-bright);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--success));
+    opacity: 0.6;
+  }
+
+  .result-highlight {
+    text-align: center;
+    padding: 24px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .result-highlight .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .leverage-value {
+    font-family: var(--mono);
+    font-size: 52px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    text-shadow: 0 0 30px var(--accent-glow);
+    letter-spacing: -2px;
+  }
+
+  .leverage-value .unit {
+    font-size: 20px;
+    opacity: 0.6;
+    letter-spacing: 0;
+  }
+
+  .leverage-warn {
+    font-size: 11px;
+    color: var(--danger);
+    margin-top: 6px;
+    font-family: var(--mono);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .leverage-warn.show { opacity: 1; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .stat-box {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .stat-box .s-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .stat-box .s-value {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+
+  .stat-box.danger .s-value { color: var(--danger); }
+  .stat-box.success .s-value { color: var(--success); }
+  .stat-box.accent .s-value { color: var(--accent); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-family: var(--mono);
+    letter-spacing: 1px;
+  }
+
+  .empty-state .icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+    opacity: 0.4;
+  }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 16px;
+  }
+
+  .divider hr {
+    flex: 1;
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .divider span {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+
+  .footer-note {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+    padding: 8px;
+  }
+
+  .risk-bar-wrap {
+    margin-top: 16px;
+  }
+
+  .risk-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .risk-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .risk-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s ease, background 0.4s;
+    background: linear-gradient(90deg, var(--success), var(--accent));
+  }
+
+  .risk-bar-fill.medium { background: linear-gradient(90deg, var(--accent), #ffd700); }
+  .risk-bar-fill.high { background: linear-gradient(90deg, #ffd700, var(--danger)); }
+  .risk-bar-fill.extreme { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+  @media (max-width: 480px) {
+    .row2 { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .leverage-value { font-size: 42px; }
+  }
 </style>
 </head>
 <body>
-
-<!-- ══ SETUP ══ -->
-<div id="setup-screen">
-  <div class="setup-box">
-    <div class="setup-logo">TRADE LOG</div>
-    <h2>Supabase 연결 설정</h2>
-    <p class="setup-desc">처음 한 번만 설정하면 이후 자동 연결됩니다. 설정값은 이 브라우저에 저장됩니다.</p>
-    <div class="setup-field">
-      <label>Supabase Project URL</label>
-      <input class="setup-input" id="inp-url" placeholder="https://xxxxxxxxxxxx.supabase.co" />
-      <div class="setup-hint">Project Settings → API → Project URL</div>
-    </div>
-    <div class="setup-field">
-      <label>Supabase anon (public) Key</label>
-      <input class="setup-input" id="inp-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." />
-      <div class="setup-hint">Project Settings → API → anon public</div>
-    </div>
-    <button class="setup-btn" onclick="saveConfig()">연결하기</button>
-    <div id="setup-error"></div>
-    <div class="setup-note">
-      <b>아직 Supabase 프로젝트가 없다면</b> SQL Editor에서 아래 실행하세요 (한 번에 전체 복사 후 Run):
-      <pre>create table if not exists journals (
-  id uuid default gen_random_uuid() primary key,
-  title text not null,
-  start_time timestamptz not null,
-  end_time timestamptz,
-  created_at timestamptz default now()
-);
-
-create table if not exists journal_parts (
-  id uuid default gen_random_uuid() primary key,
-  journal_id uuid references journals(id) on delete cascade,
-  part_id integer not null,
-  image_path text,
-  comment text,
-  seq integer default 0,
-  created_at timestamptz default now()
-);
-
-insert into storage.buckets (id, name, public)
-values ('trade-images', 'trade-images', true)
-on conflict (id) do nothing;
-
-create policy if not exists "storage_all" on storage.objects
-for all using (bucket_id = 'trade-images')
-with check (bucket_id = 'trade-images');
-
-alter table journals enable row level security;
-create policy if not exists "journals_all" on journals
-for all using (true) with check (true);
-
-alter table journal_parts enable row level security;
-create policy if not exists "parts_all" on journal_parts
-for all using (true) with check (true);</pre>
-    </div>
-  </div>
-</div>
-
-<!-- ══ NAV ══ -->
-<nav>
-  <div class="nav-logo">TRADE LOG</div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('record',this)">기록</button>
-    <button class="nav-tab" onclick="showPage('list',this)">일지 목록</button>
-    <button class="nav-tab" onclick="showPage('filter',this)">파트별 보기</button>
-  </div>
-  <div class="nav-right">
-    <div class="cloud-status">
-      <div class="cloud-dot" id="cloud-dot"></div>
-      <span id="cloud-label">연결됨</span>
-    </div>
-    <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="resetConfig()">⚙ 설정</button>
-  </div>
-</nav>
-
-<main>
-  <!-- RECORD -->
-  <div class="page active" id="page-record">
-    <div class="session-bar">
-      <div class="session-dot" id="session-dot"></div>
-      <div class="session-info">
-        <div class="session-label" id="session-label">매매를 시작하려면 버튼을 누르세요</div>
-        <div class="session-title-input" id="session-title" style="color:var(--text3);font-size:14px">매매 시작 버튼을 눌러주세요</div>
-      </div>
-      <button class="btn btn-start" id="btn-start" onclick="openMindsetModal()">▶ 매매 시작</button>
-      <button class="btn btn-end" id="btn-end" style="display:none" onclick="endSession()">■ 종료 &amp; 저장</button>
-    </div>
-    <div class="paste-hint" id="paste-hint" style="display:none">
-      <kbd>Ctrl+V</kbd> 로 클립보드 이미지 붙여넣기 가능 — 현재 파트:
-      <span class="active-part-badge" id="paste-badge">1. 추세 방향</span>
-      <span style="color:var(--text3)">(카드 클릭으로 변경)</span>
-    </div>
-    <div class="mindset-bar" id="mindset-bar" onclick="openMindsetEdit()">
-      <div class="mindset-bar-icon">🧘</div>
-      <div class="mindset-bar-text" id="mindset-bar-text"></div>
-      <div class="mindset-bar-edit">수정 ✎</div>
-    </div>
-    <div class="parts-grid" id="parts-grid"></div>
+<div class="container">
+  <div class="header">
+    <div class="label">⬡ Position Sizing</div>
+    <h1>트레이딩 비중 계산기</h1>
+    <div class="sub">리스크 기반 레버리지 · 진입 비중 산출</div>
   </div>
 
-  <!-- LIST -->
-  <div class="page" id="page-list">
-    <div class="list-header">
-      <h2>매매일지</h2>
-      <span class="list-count" id="list-count">—</span>
+  <!-- 자산 정보 -->
+  <div class="card">
+    <div class="card-title">/ 01 · 자산 정보</div>
+    <div class="field">
+      <label>현재 총 자산</label>
+      <div class="input-wrap">
+        <span class="prefix">$</span>
+        <input type="number" id="totalAsset" placeholder="10,000" min="0">
+        <span class="suffix">USD</span>
+      </div>
     </div>
-    <div class="stats-bar" id="stats-bar" style="display:none">
-      <div class="stat-item">
-        <div class="stat-value" id="stat-total" style="color:var(--text)">0</div>
-        <div class="stat-label">TOTAL</div>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat-item">
-        <div class="stat-value" id="stat-win" style="color:var(--green)">0</div>
-        <div class="stat-label">WIN</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value" id="stat-loss" style="color:var(--red)">0</div>
-        <div class="stat-label">LOSS</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value" id="stat-be" style="color:var(--text3)">0</div>
-        <div class="stat-label">B/E</div>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="winrate-bar-wrap">
-        <div class="winrate-bar-label">
-          <span>승률</span>
-          <span id="stat-rate" style="font-family:'JetBrains Mono',monospace;color:var(--text)">—</span>
+  </div>
+
+  <!-- 가격 정보 -->
+  <div class="card">
+    <div class="card-title">/ 02 · 진입 & 손절 가격</div>
+    <div class="direction-row">
+      <button class="dir-btn long active" onclick="setDirection('long')">▲ LONG</button>
+      <button class="dir-btn short" onclick="setDirection('short')">▼ SHORT</button>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>진입 가격</label>
+        <div class="input-wrap">
+          <span class="prefix">$</span>
+          <input type="number" id="entryPrice" placeholder="50,000" min="0">
         </div>
-        <div class="winrate-bar-track">
-          <div class="winrate-bar-fill" id="stat-bar" style="width:0%"></div>
+      </div>
+      <div class="field">
+        <label>손절 가격</label>
+        <div class="input-wrap">
+          <span class="prefix">$</span>
+          <input type="number" id="stopPrice" placeholder="48,000" min="0">
         </div>
       </div>
     </div>
-    <div id="journal-list"><div class="loading-msg">불러오는 중...</div></div>
+    <div class="stat-box" style="margin-top:4px; background: rgba(255,61,90,0.04); border-color: rgba(255,61,90,0.15);">
+      <div class="s-label">손절 거리 (슬리피지 제외)</div>
+      <div class="s-value" id="stopDistVal" style="color:var(--danger)">— %</div>
+    </div>
   </div>
 
-  <!-- FILTER -->
-  <div class="page" id="page-filter">
-    <div class="filter-bar" id="filter-bar"></div>
-    <div class="filter-grid" id="filter-grid"></div>
-    <div class="tag-section" id="tag-section" style="display:none">
-      <div class="tag-section-title">태그</div>
-      <div class="tag-filter-cloud" id="tag-filter-cloud"></div>
-      <div style="margin-top:20px">
-        <div id="tag-filtered-list" class="tag-journal-grid"></div>
+  <!-- 리스크 설정 -->
+  <div class="card">
+    <div class="card-title">/ 03 · 손절 시 허용 손실</div>
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="toggleAmt" onclick="setMode('amount')">금액 ($)</button>
+      <button class="toggle-btn" id="togglePct" onclick="setMode('percent')">비율 (%)</button>
+    </div>
+
+    <div id="amountField" class="field">
+      <label>손절 시 잃을 금액</label>
+      <div class="input-wrap">
+        <span class="prefix">$</span>
+        <input type="number" id="riskAmount" placeholder="100" min="0">
+        <span class="suffix">USD</span>
+      </div>
+    </div>
+
+    <div id="percentField" class="field" style="display:none">
+      <label>총 자산 대비 손실 허용 비율</label>
+      <div class="input-wrap">
+        <input type="number" id="riskPercent" placeholder="1.0" min="0" max="100" step="0.1" class="no-prefix">
+        <span class="suffix">%</span>
       </div>
     </div>
   </div>
-</main>
 
-<!-- MINDSET MODAL -->
-<div class="mindset-overlay" id="mindset-overlay">
-  <div class="mindset-card">
-    <div class="mindset-card-header">
-      <div class="mindset-icon">🧘</div>
-      <h3>매매 전 마인드셋</h3>
-      <button class="mindset-edit-btn" id="mindset-edit-btn" onclick="toggleMindsetEdit()">수정</button>
+  <!-- 결과 -->
+  <div class="result-card" id="resultCard">
+    <div class="card-title">/ 결과</div>
+    <div id="emptyState" class="empty-state">
+      <div class="icon">◈</div>
+      위 항목을 입력하면 결과가 표시됩니다
     </div>
-    <div class="mindset-body">
-      <div class="mindset-text-display" id="mindset-display">
-        <span class="empty-hint">아직 작성된 내용이 없습니다.<br>수정 버튼을 눌러 매매 전 읽을 내용을 작성해보세요.</span>
+    <div id="resultContent" style="display:none">
+      <div class="result-highlight">
+        <div class="label">권장 레버리지</div>
+        <div class="leverage-value" id="leverageVal">—<span class="unit">x</span></div>
+        <div class="leverage-warn" id="leverageWarn">⚠ 고위험 레버리지 구간입니다</div>
       </div>
-      <textarea class="mindset-textarea" id="mindset-textarea" placeholder="매매 전에 읽을 내용을 작성하세요.&#10;&#10;예)&#10;- 셋업이 완성되기 전까지 절대 진입하지 않는다&#10;- 손절은 무조건 지킨다&#10;- FOMO 금지" style="display:none"></textarea>
-    </div>
-    <div class="mindset-footer" id="mindset-footer">
-      <button class="mindset-cancel-btn" onclick="closeMindsetModal()">닫기</button>
-      <button class="mindset-start-btn" onclick="confirmStartSession()">✓ 읽었습니다 — 매매 시작</button>
+      <div class="stats-grid">
+        <div class="stat-box accent">
+          <div class="s-label">진입 금액</div>
+          <div class="s-value" id="positionVal">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="s-label">실제 투자 비중</div>
+          <div class="s-value" id="positionPctVal">—</div>
+        </div>
+        <div class="stat-box danger">
+          <div class="s-label">허용 손실 금액</div>
+          <div class="s-value" id="lossAmtVal">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="s-label">허용 손실 비율</div>
+          <div class="s-value" id="lossPctVal">—</div>
+        </div>
+      </div>
+      <div class="risk-bar-wrap">
+        <div class="risk-bar-label">
+          <span>리스크 수준</span>
+          <span id="riskLevelLabel">—</span>
+        </div>
+        <div class="risk-bar"><div class="risk-bar-fill" id="riskBarFill" style="width:0%"></div></div>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- DETAIL MODAL -->
-<div class="modal-overlay" id="detail-modal" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 id="modal-title">—</h3>
-      <span style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace" id="modal-date"></span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="modal-body" id="detail-parts"></div>
-    <div class="modal-body" id="review-section" style="padding-top:0"></div>
-  </div>
+  <div class="footer-note">수수료 · 슬리피지는 포함되지 않습니다 · 교육 목적</div>
 </div>
-
-<!-- LIGHTBOX -->
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <button class="lb-close">✕</button>
-  <img id="lb-img" src="" alt="">
-</div>
-
-<!-- TOAST -->
-<div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
-// ═══════════════════════════════════
-//  CONSTANTS
-// ═══════════════════════════════════
-const PARTS = [
-  { id:1, name:'추세 방향',     color:'#4f8ef7' },
-  { id:2, name:'MSS',           color:'#a855f7' },
-  { id:3, name:'유동성 · 횡보', color:'#22c55e' },
-  { id:4, name:'오더블럭',      color:'#f97316' },
-  { id:5, name:'돌파',          color:'#eab308' },
-  { id:6, name:'진입',          color:'#ef4444' },
-];
-const MAX_W = 2560;
-const QUALITY = 0.92;
+  let mode = 'amount';
+  let direction = 'long';
 
-// ═══════════════════════════════════
-//  SUPABASE
-// ═══════════════════════════════════
-let SB_URL = localStorage.getItem('sb_url') || 'https://gfjmkyhbvtzabjfborjb.supabase.co';
-let SB_KEY = localStorage.getItem('sb_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmam1reWhidnR6YWJqZmJvcmpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzOTcyMjAsImV4cCI6MjA4Njk3MzIyMH0.48Sa4BYPWTfIZKegewRnV3sxw1PHyn9S9PzgTc2v5JM';
+  function setMode(m) {
+    mode = m;
+    document.getElementById('amountField').style.display = m === 'amount' ? 'block' : 'none';
+    document.getElementById('percentField').style.display = m === 'percent' ? 'block' : 'none';
+    document.getElementById('toggleAmt').classList.toggle('active', m === 'amount');
+    document.getElementById('togglePct').classList.toggle('active', m === 'percent');
+    calc();
+  }
 
-const sbH = (extra={}) => ({
-  'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
-  'Content-Type': 'application/json', 'Prefer': 'return=representation',
-  ...extra
-});
-const sbFetch = (path, opts={}) =>
-  fetch(SB_URL + path, { ...opts, headers: { ...sbH(), ...(opts.headers||{}) } });
+  function setDirection(d) {
+    direction = d;
+    document.querySelectorAll('.dir-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.dir-btn.' + d).classList.add('active');
+    calc();
+  }
 
-async function saveConfig() {
-  const url = document.getElementById('inp-url').value.trim().replace(/\/$/, '');
-  const key = document.getElementById('inp-key').value.trim();
-  const errEl = document.getElementById('setup-error');
-  errEl.style.display = 'none';
-  if (!url || !key) { showSetupErr('URL과 Key를 모두 입력해주세요.'); return; }
-  if (!url.startsWith('https://')) { showSetupErr('URL은 https://로 시작해야 합니다.'); return; }
-  try {
-    const r = await fetch(url + '/rest/v1/journals?limit=1', {
-      headers: { apikey: key, Authorization: 'Bearer ' + key }
-    });
-    if (!r.ok) throw new Error('HTTP ' + r.status + ' — SQL 설정이 완료됐는지 확인하세요.');
-  } catch(e) { showSetupErr('연결 실패: ' + e.message); return; }
-  SB_URL = url; SB_KEY = key;
-  localStorage.setItem('sb_url', SB_URL);
-  localStorage.setItem('sb_key', SB_KEY);
-  document.getElementById('setup-screen').style.display = 'none';
-  init();
-}
-function showSetupErr(msg) {
-  const el = document.getElementById('setup-error');
-  el.textContent = msg; el.style.display = 'block';
-}
-function resetConfig() {
-  if (!confirm('Supabase 설정을 초기화할까요?')) return;
-  localStorage.removeItem('sb_url'); localStorage.removeItem('sb_key');
-  location.reload();
-}
+  function fmt(n) {
+    if (n === null || isNaN(n)) return '—';
+    return '$' + n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  }
 
-// ═══════════════════════════════════
-//  IMAGE COMPRESSION
-// ═══════════════════════════════════
-function compressFile(file) {
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onload = e => compressDataUrl(e.target.result).then(resolve);
-    reader.readAsDataURL(file);
-  });
-}
-function compressDataUrl(dataUrl) {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => {
-      let w = img.width, h = img.height;
-      if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
-      const c = document.createElement('canvas');
-      c.width = w; c.height = h;
-      c.getContext('2d').drawImage(img, 0, 0, w, h);
-      c.toBlob(blob => resolve(blob), 'image/jpeg', QUALITY);
-    };
-    img.src = dataUrl;
-  });
-}
-async function uploadBlob(blob, journalId, partId, seq) {
-  const path = `${journalId}/p${partId}_${seq}_${Date.now()}.jpg`;
-  const r = await fetch(`${SB_URL}/storage/v1/object/trade-images/${path}`, {
-    method: 'POST',
-    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'image/jpeg' },
-    body: blob
-  });
-  if (!r.ok) throw new Error('Storage upload failed: ' + await r.text());
-  return `${SB_URL}/storage/v1/object/public/trade-images/${path}`;
-}
-async function deleteStorageFile(url) {
-  const path = url.split('/trade-images/')[1];
-  if (!path) return;
-  await fetch(`${SB_URL}/storage/v1/object/trade-images/${path}`, {
-    method: 'DELETE',
-    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
-  });
-}
+  function calc() {
+    const asset = parseFloat(document.getElementById('totalAsset').value);
+    const entry = parseFloat(document.getElementById('entryPrice').value);
+    const stop  = parseFloat(document.getElementById('stopPrice').value);
 
-// ═══════════════════════════════════
-//  STATE
-// ═══════════════════════════════════
-let session = null; // { journalId, title, parts:{}, uploading:Set }
-let filterPart = 1;
-let pasteTarget = 1;
-let journalsCache = [];
-// review state per journal
-const reviewState = {}; // { [jid]: { imgs, text, tags:[], textRowId, tagRowId, stackIdx, uploading, editing, editingTags } }
-let activeTag = null; // currently selected tag in filter page
-
-// ═══════════════════════════════════
-//  TOAST
-// ═══════════════════════════════════
-function toast(msg, type='inf', dur=3000) {
-  const wrap = document.getElementById('toast-wrap');
-  const el = document.createElement('div');
-  el.className = 'toast ' + type; el.textContent = msg;
-  wrap.appendChild(el);
-  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
-  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, dur);
-}
-
-// ═══════════════════════════════════
-//  PAGE
-// ═══════════════════════════════════
-function showPage(name, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (name === 'list') loadJournals();
-  if (name === 'filter') renderFilter();
-}
-
-// ═══════════════════════════════════
-//  SESSION
-// ═══════════════════════════════════
-// ═══════════════════════════════════
-//  MINDSET
-// ═══════════════════════════════════
-const MINDSET_KEY = 'trade_mindset';
-let mindsetEditing = false;
-
-function loadMindsetText() {
-  return localStorage.getItem(MINDSET_KEY) || '';
-}
-function saveMindsetText(text) {
-  localStorage.setItem(MINDSET_KEY, text);
-}
-
-function openMindsetModal() {
-  const text = loadMindsetText();
-  renderMindsetModal(text, false);
-  document.getElementById('mindset-overlay').classList.add('open');
-}
-
-function openMindsetEdit() {
-  const text = loadMindsetText();
-  renderMindsetModal(text, true);
-  document.getElementById('mindset-overlay').classList.add('open');
-  setTimeout(() => document.getElementById('mindset-textarea')?.focus(), 100);
-}
-
-function renderMindsetModal(text, editing) {
-  mindsetEditing = editing;
-  const display = document.getElementById('mindset-display');
-  const textarea = document.getElementById('mindset-textarea');
-  const editBtn = document.getElementById('mindset-edit-btn');
-  const footer = document.getElementById('mindset-footer');
-
-  if (editing) {
-    display.style.display = 'none';
-    textarea.style.display = 'block';
-    textarea.value = text;
-    editBtn.textContent = '취소';
-    footer.innerHTML = `
-      <button class="mindset-cancel-btn" onclick="closeMindsetModal()">닫기</button>
-      <button class="mindset-save-btn" onclick="saveMindset()">저장</button>`;
-  } else {
-    textarea.style.display = 'none';
-    display.style.display = 'block';
-    if (text) {
-      display.textContent = text;
-      display.style.color = 'var(--text2)';
+    // Stop distance
+    if (entry > 0 && stop > 0) {
+      const dist = direction === 'long'
+        ? ((entry - stop) / entry * 100)
+        : ((stop - entry) / entry * 100);
+      document.getElementById('stopDistVal').textContent = dist > 0 ? dist.toFixed(2) + ' %' : '— (방향 확인)';
     } else {
-      display.innerHTML = '<span class="empty-hint">아직 작성된 내용이 없습니다.<br>수정 버튼을 눌러 매매 전 읽을 내용을 작성해보세요.</span>';
+      document.getElementById('stopDistVal').textContent = '— %';
     }
-    editBtn.textContent = '수정';
-    footer.innerHTML = `
-      <button class="mindset-cancel-btn" onclick="closeMindsetModal()">닫기</button>
-      <button class="mindset-start-btn" onclick="confirmStartSession()">✓ 읽었습니다 — 매매 시작</button>`;
-  }
-}
 
-function toggleMindsetEdit() {
-  const text = loadMindsetText();
-  if (mindsetEditing) {
-    renderMindsetModal(text, false); // cancel edit
-  } else {
-    renderMindsetModal(text, true);
-    setTimeout(() => document.getElementById('mindset-textarea')?.focus(), 50);
-  }
-}
-
-function saveMindset() {
-  const text = document.getElementById('mindset-textarea').value;
-  saveMindsetText(text);
-  renderMindsetModal(text, false);
-  updateMindsetBar();
-  toast('마인드셋 저장됨 ✓', 'ok');
-}
-
-function closeMindsetModal() {
-  document.getElementById('mindset-overlay').classList.remove('open');
-  mindsetEditing = false;
-}
-
-function confirmStartSession() {
-  closeMindsetModal();
-  startSession();
-}
-
-function updateMindsetBar() {
-  const text = loadMindsetText();
-  const barText = document.getElementById('mindset-bar-text');
-  if (!barText) return;
-  if (text) {
-    barText.textContent = text;
-    barText.style.color = '';
-  } else {
-    barText.textContent = '클릭하여 매매 전 마인드셋을 작성하세요.';
-    barText.style.color = 'var(--text3)';
-  }
-}
-
-async function getAutoTitle(startTime) {
-  // startTime: Date object - use this for the date key
-  const dateKey = startTime.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\. /g,'.').replace('.','');
-  const dateStr = startTime.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
-  // Count journals that started on the same local date
-  try {
-    // query journals started on same day
-    const dayStart = new Date(startTime); dayStart.setHours(0,0,0,0);
-    const dayEnd   = new Date(startTime); dayEnd.setHours(23,59,59,999);
-    const r = await sbFetch(
-      `/rest/v1/journals?start_time=gte.${dayStart.toISOString()}&start_time=lte.${dayEnd.toISOString()}&select=id&order=start_time.asc`
-    );
-    const rows = await r.json();
-    const num = rows.length + 1;
-    return `${dateStr} - ${num}`;
-  } catch {
-    return `${dateStr} - 1`;
-  }
-}
-
-async function startSession() {
-  const startTime = new Date();
-  const autoTitle = await getAutoTitle(startTime);
-  const title = autoTitle;
-  let journalId;
-  try {
-    const r = await sbFetch('/rest/v1/journals', {
-      method: 'POST',
-      body: JSON.stringify({ title, start_time: startTime.toISOString() })
-    });
-    if (!r.ok) throw new Error(await r.text());
-    journalId = (await r.json())[0].id;
-  } catch(e) { toast('DB 오류: ' + e.message, 'err'); return; }
-
-  session = { journalId, title, parts: {}, uploading: new Set() };
-  PARTS.forEach(p => session.parts[p.id] = []);
-  document.getElementById('session-dot').classList.add('on');
-  document.getElementById('session-label').textContent = '진행 중 · ' + title;
-  document.getElementById('btn-start').style.display = 'none';
-  document.getElementById('btn-end').style.display = '';
-  document.getElementById('session-title').textContent = title; document.getElementById('session-title').style.color='var(--text)';
-  
-  document.getElementById('paste-hint').style.display = 'flex';
-  updateMindsetBar();
-  renderParts();
-  toast('📈 ' + title + ' 시작!', 'ok');
-}
-
-async function endSession() {
-  if (!session) return;
-  if (session.uploading.size > 0) { toast('업로드 중입니다. 잠시 후 시도하세요.', 'err'); return; }
-  if (!confirm('매매를 종료하고 저장할까요?')) return;
-  try {
-    await sbFetch(`/rest/v1/journals?id=eq.${session.journalId}`, {
-      method: 'PATCH', body: JSON.stringify({ end_time: new Date().toISOString() })
-    });
-  } catch(e) { toast('저장 오류: ' + e.message, 'err'); return; }
-  session = null;
-  document.getElementById('session-dot').classList.remove('on');
-  document.getElementById('session-label').textContent = '매매를 시작하려면 버튼을 누르세요';
-  document.getElementById('btn-start').style.display = '';
-  document.getElementById('btn-end').style.display = 'none';
-  
-  document.getElementById('session-title').textContent = '매매 시작 버튼을 눌러주세요'; document.getElementById('session-title').style.color='var(--text3)';
-  document.getElementById('paste-hint').style.display = 'none';
-  renderParts();
-  toast('✓ 일지가 저장됐습니다!', 'ok');
-}
-
-// ═══════════════════════════════════
-//  RECORD RENDER
-// ═══════════════════════════════════
-function renderParts() {
-  const grid = document.getElementById('parts-grid');
-  if (!session) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">매매를 시작하면 파트별 이미지를 업로드할 수 있습니다.</div>`;
-    return;
-  }
-  grid.innerHTML = PARTS.map(buildCard).join('');
-  updatePasteBadge();
-}
-
-// stackIdx[pid] = currently viewed index (0 = oldest, imgs.length-1 = latest)
-const stackIdx = {};
-
-function buildCard(p) {
-  const imgs = session.parts[p.id] || [];
-  const busy = session.uploading.has(p.id);
-  const isTarget = pasteTarget === p.id;
-
-  // default: show latest
-  if (stackIdx[p.id] === undefined || stackIdx[p.id] >= imgs.length) {
-    stackIdx[p.id] = Math.max(0, imgs.length - 1);
-  }
-  const idx = stackIdx[p.id];
-  const cur = imgs[idx];
-  const total = imgs.length;
-
-  const stackHtml = total === 0 ? `
-    <div class="stack-empty">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="9" y="2" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-      <p>이 카드 클릭 후 Ctrl+V</p>
-    </div>` : `
-    <div class="stack-stage" id="stage-${p.id}">
-      ${total >= 3 ? `<div class="stack-ghost stack-ghost-2"></div>` : ''}
-      ${total >= 2 ? `<div class="stack-ghost stack-ghost-1"></div>` : ''}
-      <div class="stack-front" onclick="openLightbox('${cur.image_path}')">
-        <img src="${cur.image_path}" loading="lazy" alt="">
-      </div>
-      <div class="stack-nav" onclick="event.stopPropagation()">
-        <button class="stack-nav-btn" onclick="stackPrev(${p.id})" ${idx === 0 ? 'disabled' : ''}>‹ 이전</button>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span class="stack-counter">${idx+1} / ${total}</span>
-          ${idx === total-1 ? `<span style="font-size:9px;background:var(--accent);color:#fff;padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace">최신</span>` : ''}
-          <button class="stack-del-btn" onclick="delImg(event,${p.id},${idx},'${cur.id}','${cur.image_path}')">🗑</button>
-        </div>
-        <button class="stack-nav-btn" onclick="stackNext(${p.id})" ${idx === total-1 ? 'disabled' : ''}>다음 ›</button>
-      </div>
-    </div>`;
-
-  return `<div class="part-card ${isTarget?'paste-target':''}" id="pc-${p.id}" onclick="setPaste(${p.id})">
-    <div class="part-header">
-      <div class="part-num" style="background:${p.color}">${p.id}</div>
-      <div class="part-name">${p.name}</div>
-      <div class="part-meta">${total}장</div>
-    </div>
-    <div class="part-body">
-      <div class="stack-wrap">${stackHtml}</div>
-      <div class="paste-zone" id="uz-${p.id}" style="${total > 0 ? 'padding:8px 10px;' : ''}">
-        ${busy ? '<div class="uploading-overlay"><div class="spinner"></div></div>' : ''}
-        ${total === 0 ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="2" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>` : ''}
-        <p class="uz-text">${total === 0 ? 'Ctrl+V 로 붙여넣기' : '+ Ctrl+V 로 이미지 추가'}</p>
-        ${total === 0 ? `<p class="uz-sub">이 카드 클릭 후 → 붙여넣기</p>` : ''}
-      </div>
-      <textarea class="comment-box" id="cb-${p.id}"
-        placeholder="코멘트..."
-        onclick="event.stopPropagation()"
-        onblur="saveComment(${p.id})">${getComment(p.id)}</textarea>
-    </div>
-  </div>`;
-}
-
-function stackPrev(pid) {
-  if (stackIdx[pid] > 0) { stackIdx[pid]--; refreshCard(pid); }
-}
-function stackNext(pid) {
-  const total = (session.parts[pid] || []).length;
-  if (stackIdx[pid] < total - 1) { stackIdx[pid]++; refreshCard(pid); }
-}
-function refreshCard(pid) {
-  const p = PARTS.find(x => x.id === pid);
-  const card = document.getElementById('pc-' + pid);
-  if (!card || !p) return;
-  const isTarget = pasteTarget === pid;
-  card.outerHTML = buildCard(p);
-  // restore paste-target class
-  const newCard = document.getElementById('pc-' + pid);
-  if (newCard && isTarget) newCard.classList.add('paste-target');
-  // restore comment
-  const cb = document.getElementById('cb-' + pid);
-  if (cb) cb.value = getComment(pid);
-}
-
-function getComment(pid) {
-  const imgs = session?.parts[pid];
-  if (!imgs || !imgs.length) return '';
-  const idx = (stackIdx[pid] !== undefined && stackIdx[pid] < imgs.length) ? stackIdx[pid] : imgs.length - 1;
-  return imgs[idx].comment || '';
-}
-
-// ═══════════════════════════════════
-//  PASTE TARGET
-// ═══════════════════════════════════
-function setPaste(pid) {
-  if (!session) return;
-  pasteTarget = pid;
-  document.querySelectorAll('.part-card').forEach(c => c.classList.remove('paste-target'));
-  const card = document.getElementById('pc-' + pid);
-  if (card) card.classList.add('paste-target');
-  updatePasteBadge();
-}
-function updatePasteBadge() {
-  const p = PARTS.find(x => x.id === pasteTarget);
-  const badge = document.getElementById('paste-badge');
-  if (badge && p) { badge.textContent = p.id + '. ' + p.name; badge.style.background = p.color; }
-}
-
-// ═══════════════════════════════════
-//  FILE HANDLERS
-// ═══════════════════════════════════
-// Global Ctrl+V
-document.addEventListener('paste', e => {
-  if (!session) return;
-  const item = [...e.clipboardData.items].find(i => i.type.startsWith('image/'));
-  if (!item) return;
-  e.preventDefault();
-  handleFile(item.getAsFile(), pasteTarget);
-});
-
-async function handleFile(file, pid) {
-  if (!session) return;
-  const p = PARTS.find(x => x.id === pid);
-  const comment = document.getElementById('cb-' + pid)?.value || '';
-  session.uploading.add(pid);
-  renderParts();
-  // Restore comment text after re-render
-  const cb = document.getElementById('cb-' + pid);
-  if (cb) cb.value = comment;
-
-  try {
-    const origKB = Math.round(file.size / 1024);
-    const blob = await compressFile(file);
-    const compKB = Math.round(blob.size / 1024);
-    const seq = session.parts[pid].length;
-    const imageUrl = await uploadBlob(blob, session.journalId, pid, seq);
-    const r = await sbFetch('/rest/v1/journal_parts', {
-      method: 'POST',
-      body: JSON.stringify({ journal_id: session.journalId, part_id: pid, image_path: imageUrl, comment, seq })
-    });
-    if (!r.ok) throw new Error(await r.text());
-    const row = (await r.json())[0];
-    session.parts[pid].push({ id: row.id, image_path: imageUrl, comment, seq });
-    stackIdx[pid] = session.parts[pid].length - 1; // jump to latest
-    toast(`✓ 업로드 완료 (${origKB}KB → ${compKB}KB)`, 'ok');
-  } catch(e) { toast('업로드 실패: ' + e.message, 'err'); }
-  finally {
-    session.uploading.delete(pid);
-    refreshCard(pid);
-    const cb2 = document.getElementById('cb-' + pid);
-    if (cb2) cb2.value = comment;
-    // update header count
-    const meta = document.querySelector(`#pc-${pid} .part-meta`);
-    if (meta) meta.textContent = (session.parts[pid]||[]).length + '장';
-  }
-}
-
-async function saveComment(pid) {
-  const val = document.getElementById('cb-' + pid)?.value || '';
-  const imgs = session?.parts[pid];
-  if (!imgs || !imgs.length) return;
-  const idx = (stackIdx[pid] !== undefined && stackIdx[pid] < imgs.length) ? stackIdx[pid] : imgs.length - 1;
-  const img = imgs[idx];
-  img.comment = val;
-  try {
-    await sbFetch(`/rest/v1/journal_parts?id=eq.${img.id}`, {
-      method: 'PATCH', body: JSON.stringify({ comment: val })
-    });
-  } catch {}
-}
-
-async function delImg(e, pid, idx, rowId, imgUrl) {
-  e.stopPropagation();
-  if (!confirm('이 이미지를 삭제할까요?')) return;
-  try {
-    await sbFetch(`/rest/v1/journal_parts?id=eq.${rowId}`, { method: 'DELETE' });
-    await deleteStorageFile(imgUrl);
-    session.parts[pid].splice(idx, 1);
-    renderParts();
-    toast('삭제됨', 'inf');
-  } catch(err) { toast('삭제 실패: ' + err.message, 'err'); }
-}
-
-// ═══════════════════════════════════
-//  LIST
-// ═══════════════════════════════════
-async function loadJournals() {
-  const el = document.getElementById('journal-list');
-  el.innerHTML = '<div class="loading-msg">불러오는 중...</div>';
-  try {
-    const r = await sbFetch('/rest/v1/journals?select=*&order=created_at.desc');
-    if (!r.ok) throw new Error(await r.text());
-    journalsCache = await r.json();
-    renderList();
-  } catch(e) { el.innerHTML = `<div class="empty-state">로드 실패: ${e.message}</div>`; }
-}
-
-function getWlClass(result) {
-  if (result === 'win') return 'win';
-  if (result === 'loss') return 'loss';
-  if (result === 'be') return 'be';
-  return '';
-}
-
-function renderList() {
-  const el = document.getElementById('journal-list');
-  document.getElementById('list-count').textContent = journalsCache.length + '개';
-  if (!journalsCache.length) {
-    el.innerHTML = '<div class="empty-state">저장된 매매일지가 없습니다</div>';
-    document.getElementById('stats-bar').style.display = 'none';
-    return;
-  }
-
-  // stats
-  const decided = journalsCache.filter(j => j.result);
-  const wins  = journalsCache.filter(j => j.result === 'win').length;
-  const losses = journalsCache.filter(j => j.result === 'loss').length;
-  const bes   = journalsCache.filter(j => j.result === 'be').length;
-  const rate  = decided.length ? Math.round(wins / decided.length * 100) : null;
-
-  const sb = document.getElementById('stats-bar');
-  sb.style.display = 'flex';
-  document.getElementById('stat-total').textContent = journalsCache.length;
-  document.getElementById('stat-win').textContent   = wins;
-  document.getElementById('stat-loss').textContent  = losses;
-  document.getElementById('stat-be').textContent    = bes;
-  document.getElementById('stat-rate').textContent  = rate !== null ? rate + '%' : '—';
-  document.getElementById('stat-bar').style.width   = rate !== null ? rate + '%' : '0%';
-
-  el.innerHTML = journalsCache.map((j, i) => {
-    const date = new Date(j.start_time).toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
-    const dots = PARTS.map(p => `<div class="part-dot" id="dot-${j.id}-${p.id}" style="background:${p.color}" title="${p.name}"></div>`).join('');
-    const wlClass = getWlClass(j.result);
-    return `<div class="journal-item ${wlClass}" onclick="openDetail('${j.id}')">
-      <div class="journal-num">#${journalsCache.length-i}</div>
-      <div class="journal-info">
-        <div class="journal-title">${j.title}</div>
-        <div class="journal-date">${date}</div>
-      </div>
-      <div class="part-dots">${dots}</div>
-      <div class="wl-btns" onclick="event.stopPropagation()">
-        <button class="wl-btn ${j.result==='win'?'win-active':''}"  onclick="setResult('${j.id}','win')">승</button>
-        <button class="wl-btn ${j.result==='be'?'be-active':''}"   onclick="setResult('${j.id}','be')">B/E</button>
-        <button class="wl-btn ${j.result==='loss'?'loss-active':''}" onclick="setResult('${j.id}','loss')">패</button>
-      </div>
-      <button class="journal-del" onclick="deleteJournal(event,'${j.id}')">🗑</button>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
-    </div>`;
-  }).join('');
-  journalsCache.forEach(j => loadDots(j.id));
-}
-
-async function setResult(jid, result) {
-  const j = journalsCache.find(x => x.id === jid);
-  if (!j) return;
-  // toggle off if same
-  const newResult = j.result === result ? null : result;
-  try {
-    await sbFetch(`/rest/v1/journals?id=eq.${jid}`, {
-      method: 'PATCH', body: JSON.stringify({ result: newResult })
-    });
-    j.result = newResult;
-    renderList();
-    journalsCache.forEach(j => loadDots(j.id));
-  } catch(e) { toast('저장 실패: ' + e.message, 'err'); }
-}
-
-async function loadDots(jid) {
-  try {
-    const r = await sbFetch(`/rest/v1/journal_parts?journal_id=eq.${jid}&select=part_id`);
-    const rows = await r.json();
-    const set = new Set(rows.map(x => x.part_id));
-    PARTS.forEach(p => { const d = document.getElementById(`dot-${jid}-${p.id}`); if (d && set.has(p.id)) d.classList.add('has'); });
-  } catch {}
-}
-
-async function deleteJournal(e, jid) {
-  e.stopPropagation();
-  if (!confirm('이 매매일지를 삭제할까요? 이미지도 함께 삭제됩니다.')) return;
-  try {
-    const r = await sbFetch(`/rest/v1/journal_parts?journal_id=eq.${jid}&select=image_path`);
-    const parts = await r.json();
-    for (const p of parts) if (p.image_path) await deleteStorageFile(p.image_path);
-    await sbFetch(`/rest/v1/journals?id=eq.${jid}`, { method: 'DELETE' });
-    toast('삭제됨', 'inf');
-    loadJournals();
-  } catch(e) { toast('삭제 실패: ' + e.message, 'err'); }
-}
-
-// ═══════════════════════════════════
-//  FILTER
-// ═══════════════════════════════════
-let filterMode = 'part'; // 'part' | 'tag'
-
-async function renderFilter() {
-  // filter bar: parts + tag tab
-  document.getElementById('filter-bar').innerHTML =
-    PARTS.map(p =>
-      `<button class="filter-btn ${filterMode==='part'&&filterPart===p.id?'active':''}"
-        style="${filterMode==='part'&&filterPart===p.id?`background:${p.color};border-color:${p.color}`:''}"
-        onclick="setFilter(${p.id})">${p.id}. ${p.name}</button>`
-    ).join('') +
-    `<button class="filter-btn ${filterMode==='tag'?'active':''}"
-      style="${filterMode==='tag'?'background:#ca8a04;border-color:#ca8a04;color:#fff':''}"
-      onclick="setTagMode()">🏷 태그</button>`;
-
-  const grid = document.getElementById('filter-grid');
-  const tagSection = document.getElementById('tag-section');
-
-  if (filterMode === 'tag') {
-    grid.style.display = 'none';
-    tagSection.style.display = 'block';
-    await showTagSection();
-    return;
-  }
-
-  grid.style.display = 'grid';
-  tagSection.style.display = 'none';
-  grid.innerHTML = '<div class="loading-msg" style="grid-column:1/-1">불러오는 중...</div>';
-  try {
-    const r = await sbFetch(`/rest/v1/journal_parts?part_id=eq.${filterPart}&select=*,journals(id,title,start_time)&order=created_at.desc`);
-    if (!r.ok) throw new Error(await r.text());
-    const rows = await r.json();
-    const byJournal = {};
-    rows.forEach(row => { if (!byJournal[row.journal_id]) byJournal[row.journal_id] = row; });
-    const items = Object.values(byJournal);
-    if (!items.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">이 파트에 이미지가 없습니다</div>'; return; }
-    grid.innerHTML = items.map(item => {
-      const j = item.journals;
-      const date = new Date(j.start_time).toLocaleDateString('ko-KR', { month:'2-digit', day:'2-digit' });
-      return `<div class="filter-card" onclick="openDetail('${j.id}')">
-        ${item.image_path ? `<img src="${item.image_path}" loading="lazy" alt="">` : '<div class="filter-card-no-img">이미지 없음</div>'}
-        <div class="filter-card-meta">
-          <div class="fc-title">${j.title}</div>
-          <div class="fc-date">${date}</div>
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) { grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">로드 실패: ${e.message}</div>`; }
-}
-
-function setFilter(pid) { filterMode = 'part'; filterPart = pid; renderFilter(); }
-function setTagMode() { filterMode = 'tag'; activeTag = null; renderFilter(); }
-
-// ═══════════════════════════════════
-//  DETAIL MODAL
-// ═══════════════════════════════════
-async function openDetail(jid) {
-  let j = journalsCache.find(x => x.id === jid);
-  if (!j) {
-    try { const r = await sbFetch(`/rest/v1/journals?id=eq.${jid}&select=*`); j = (await r.json())[0]; } catch {}
-  }
-  document.getElementById('modal-title').textContent = j?.title || '매매 상세';
-  document.getElementById('modal-date').textContent = j ? new Date(j.start_time).toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' }) : '';
-  document.getElementById('detail-parts').innerHTML = '<div class="loading-msg">불러오는 중...</div>';
-  document.getElementById('review-section').innerHTML = '';
-  reviewPasteTarget = null;
-  document.getElementById('detail-modal').classList.add('open');
-  try {
-    const r = await sbFetch(`/rest/v1/journal_parts?journal_id=eq.${jid}&select=*&order=part_id.asc,seq.asc`);
-    if (!r.ok) throw new Error(await r.text());
-    const rows = await r.json();
-    const byPart = {};
-    PARTS.forEach(p => byPart[p.id] = []);
-    rows.forEach(row => { if (byPart[row.part_id]) byPart[row.part_id].push(row); });
-    document.getElementById('detail-parts').innerHTML = PARTS.map(p => {
-      const imgs = byPart[p.id];
-      const noImg = `<div class="detail-part">
-        <div class="detail-part-header">
-          <div class="part-num" style="background:${p.color}">${p.id}</div>
-          <span style="font-size:13px;font-weight:500">${p.name}</span>
-          <span style="font-size:11px;color:var(--text3);margin-left:auto">이미지 없음</span>
-        </div>
-      </div>`;
-      if (!imgs.length) return noImg;
-      const imgHtml = imgs.map((img, i) => {
-        const isLast = i === imgs.length - 1;
-        return `<div class="detail-img-wrap ${isLast?'latest':''}" onclick="openLightbox('${img.image_path}')">
-          <img src="${img.image_path}" loading="lazy" alt="">
-          <span class="detail-img-tag ${isLast?'':'old'}">${isLast ? '최신' : i+1}</span>
-        </div>`;
-      }).join('');
-      const lastComment = imgs[imgs.length-1].comment || '';
-      return `<div class="detail-part">
-        <div class="detail-part-header">
-          <div class="part-num" style="background:${p.color}">${p.id}</div>
-          <span style="font-size:13px;font-weight:500">${p.name}</span>
-          <span style="font-size:11px;color:var(--text3);margin-left:auto">${imgs.length}장</span>
-        </div>
-        <div class="detail-part-imgs">${imgHtml}</div>
-        ${lastComment ? `<div class="detail-part-comment">💬 ${lastComment}</div>` : ''}
-      </div>`;
-    }).join('');
-  } catch(e) { document.getElementById('detail-parts').innerHTML = `<div class="empty-state">로드 실패: ${e.message}</div>`; }
-
-  // Load review
-  await loadReview(jid);
-}
-
-async function loadReview(jid) {
-  if (!reviewState[jid]) {
-    try {
-      const r = await sbFetch(`/rest/v1/journal_parts?journal_id=eq.${jid}&part_id=eq.7&select=*&order=seq.asc`);
-      const rows = await r.json();
-      const textRow = rows.find(r => !r.image_path && r.seq === 0);
-      const tagRow  = rows.find(r => !r.image_path && r.seq === 99);
-      const imgRows = rows.filter(r => r.image_path);
-      reviewState[jid] = {
-        jid, imgs: imgRows,
-        text: textRow?.comment || '',
-        textRowId: textRow?.id || null,
-        tags: tagRow?.comment ? JSON.parse(tagRow.comment) : [],
-        tagRowId: tagRow?.id || null,
-        stackIdx: Math.max(0, imgRows.length - 1),
-        uploading: false, editing: false, editingTags: false,
-      };
-    } catch {
-      reviewState[jid] = { jid, imgs:[], text:'', textRowId:null, tags:[], tagRowId:null, stackIdx:0, uploading:false, editing:false, editingTags:false };
+    if (!asset || !entry || !stop || asset <= 0 || entry <= 0 || stop <= 0) {
+      showEmpty(); return;
     }
-  }
-  renderReview(jid);
-}
 
-function renderReview(jid) {
-  const sec = document.getElementById('review-section');
-  const rs = reviewState[jid];
-  if (!rs) return;
+    // Validate direction
+    if (direction === 'long' && stop >= entry) { showEmpty(); return; }
+    if (direction === 'short' && stop <= entry) { showEmpty(); return; }
 
-  const imgs = rs.imgs;
-  const total = imgs.length;
-  const idx = Math.min(rs.stackIdx, Math.max(0, total-1));
-  rs.stackIdx = idx;
-
-  // stack HTML
-  let stackHtml = '';
-  if (total === 0) {
-    stackHtml = `<div style="text-align:center;padding:20px 0">
-      <p style="font-size:11px;color:var(--text3)">클릭 후 Ctrl+V 로 이미지 추가</p>
-    </div>`;
-  } else {
-    const cur = imgs[idx];
-    stackHtml = `<div class="review-stack-stage">
-      ${total >= 3 ? `<div class="review-ghost review-ghost-2"></div>` : ''}
-      ${total >= 2 ? `<div class="review-ghost review-ghost-1"></div>` : ''}
-      <div class="review-front" onclick="openLightbox('${cur.image_path}')">
-        <img src="${cur.image_path}" loading="lazy" alt="">
-      </div>
-      <div class="review-nav">
-        <button class="review-nav-btn" onclick="reviewPrev('${jid}')" ${idx===0?'disabled':''}>‹ 이전</button>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span class="review-counter">${idx+1} / ${total}</span>
-          ${idx===total-1 ? `<span style="font-size:9px;background:#ca8a04;color:#fff;padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace">최신</span>` : ''}
-          <button class="review-del-btn" onclick="reviewDelImg('${jid}','${cur.id}','${cur.image_path}')">🗑</button>
-        </div>
-        <button class="review-nav-btn" onclick="reviewNext('${jid}')" ${idx===total-1?'disabled':''}>다음 ›</button>
-      </div>
-    </div>`;
-  }
-
-  // paste zone
-  const pasteZone = `<div class="review-paste-zone ${rs.uploading?'active':''}" id="rpz-${jid}" onclick="setReviewPasteTarget('${jid}')">
-    ${rs.uploading ? `<div class="uploading-overlay"><div class="spinner"></div></div>` : ''}
-    <p>📋 ${total===0 ? 'Ctrl+V 로 이미지 붙여넣기' : '+ Ctrl+V 로 이미지 추가'}</p>
-    <p class="rp-sub">이 영역 클릭 후 → Ctrl+V</p>
-  </div>`;
-
-  // text area
-  const textHtml = rs.editing
-    ? `<textarea class="review-text" id="review-text-${jid}" placeholder="복기 내용을 입력하세요...">${rs.text}</textarea>
-       <button class="review-save-btn" onclick="saveReviewText('${jid}')">저장</button>`
-    : `<div class="review-text-display" onclick="startEditReview('${jid}')">${
-        rs.text
-          ? rs.text.replace(/</g,'&lt;')
-          : '<span style="color:var(--text3);font-size:12px">클릭하여 복기 내용 입력...</span>'
-      }</div>`;
-
-  // tag UI
-  const tags = rs.tags || [];
-  const tagChips = tags.map((t,i) =>
-    `<span class="tag-chip">#${t}<button class="tag-chip-del" onclick="removeTag('${jid}',${i})">×</button></span>`
-  ).join('');
-
-  const tagHtml = `
-    <div>
-      <div style="font-size:11px;color:#ca8a04;font-weight:600;margin-bottom:6px;letter-spacing:0.05em">태그</div>
-      <div class="tag-input-wrap" onclick="document.getElementById('tag-field-${jid}').focus()">
-        ${tagChips}
-        <input class="tag-input-field" id="tag-field-${jid}"
-          placeholder="${tags.length===0?'태그 입력 후 Enter':'+태그'}"
-          onkeydown="handleTagInput(event,'${jid}')">
-      </div>
-    </div>`;
-
-  sec.innerHTML = `<div class="review-section">
-    <div class="review-header">
-      <div class="review-badge">📝</div>
-      <div class="review-title">복기</div>
-      <span style="font-size:11px;color:#ca8a04;font-family:'JetBrains Mono',monospace">${total}장</span>
-    </div>
-    <div class="review-body">
-      ${stackHtml}
-      ${pasteZone}
-      ${textHtml}
-      ${tagHtml}
-    </div>
-  </div>`;
-}
-
-async function saveReviewTags(jid) {
-  const rs = reviewState[jid];
-  if (!rs) return;
-  const tagsJson = JSON.stringify(rs.tags);
-  try {
-    if (rs.tagRowId) {
-      await sbFetch(`/rest/v1/journal_parts?id=eq.${rs.tagRowId}`, {
-        method: 'PATCH', body: JSON.stringify({ comment: tagsJson })
-      });
+    // Risk amount
+    let riskAmt;
+    if (mode === 'amount') {
+      riskAmt = parseFloat(document.getElementById('riskAmount').value);
     } else {
-      const r = await sbFetch('/rest/v1/journal_parts', {
-        method: 'POST',
-        body: JSON.stringify({ journal_id: jid, part_id: 7, image_path: null, comment: tagsJson, seq: 99 })
-      });
-      const row = (await r.json())[0];
-      rs.tagRowId = row.id;
+      const pct = parseFloat(document.getElementById('riskPercent').value);
+      if (!pct) { showEmpty(); return; }
+      riskAmt = asset * pct / 100;
     }
-  } catch(e) { toast('태그 저장 실패: ' + e.message, 'err'); }
-}
+    if (!riskAmt || riskAmt <= 0) { showEmpty(); return; }
 
-function handleTagInput(e, jid) {
-  if (e.key === 'Enter' || e.key === ',') {
-    e.preventDefault();
-    const val = e.target.value.trim().replace(/^#/, '').replace(/,/g,'');
-    if (!val) return;
-    const rs = reviewState[jid];
-    if (!rs) return;
-    if (rs.tags.includes(val)) { e.target.value = ''; return; }
-    rs.tags.push(val);
-    saveReviewTags(jid);
-    renderReview(jid);
+    const stopDistPct = direction === 'long'
+      ? (entry - stop) / entry
+      : (stop - entry) / entry;
+
+    if (stopDistPct <= 0) { showEmpty(); return; }
+
+    // leverage = riskAmt / (asset * stopDistPct)
+    const leverage = riskAmt / (asset * stopDistPct);
+    // position size = asset * leverage
+    const posSize = asset * leverage;
+    const positionPct = leverage * 100;
+    const lossPct = riskAmt / asset * 100;
+
+    // Display
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('resultContent').style.display = 'block';
+
+    document.getElementById('leverageVal').innerHTML = leverage.toFixed(2) + '<span class="unit">x</span>';
+    document.getElementById('positionVal').textContent = fmt(posSize);
+    document.getElementById('positionPctVal').textContent = positionPct.toFixed(1) + ' %';
+    document.getElementById('lossAmtVal').textContent = fmt(riskAmt);
+    document.getElementById('lossPctVal').textContent = lossPct.toFixed(2) + ' %';
+
+    // Warning
+    const warn = document.getElementById('leverageWarn');
+    warn.classList.toggle('show', leverage > 10);
+
+    // Risk bar
+    const fill = document.getElementById('riskBarFill');
+    const barPct = Math.min(lossPct / 5 * 100, 100);
+    fill.style.width = barPct + '%';
+    fill.className = 'risk-bar-fill';
+    let riskLabel = '안전';
+    if (lossPct >= 1 && lossPct < 2) { fill.classList.add('medium'); riskLabel = '보통'; }
+    else if (lossPct >= 2 && lossPct < 3.5) { fill.classList.add('high'); riskLabel = '주의'; }
+    else if (lossPct >= 3.5) { fill.classList.add('extreme'); riskLabel = '고위험'; }
+    document.getElementById('riskLevelLabel').textContent = riskLabel + ' (' + lossPct.toFixed(2) + '%)';
   }
-  if (e.key === 'Backspace' && e.target.value === '') {
-    const rs = reviewState[jid];
-    if (rs && rs.tags.length) {
-      rs.tags.pop();
-      saveReviewTags(jid);
-      renderReview(jid);
-    }
+
+  function showEmpty() {
+    document.getElementById('emptyState').style.display = 'block';
+    document.getElementById('resultContent').style.display = 'none';
   }
-}
 
-async function removeTag(jid, idx) {
-  const rs = reviewState[jid];
-  if (!rs) return;
-  rs.tags.splice(idx, 1);
-  await saveReviewTags(jid);
-  renderReview(jid);
-}
-
-// collect all tags across all journals for filter page
-async function loadAllTags() {
-  try {
-    const r = await sbFetch('/rest/v1/journal_parts?part_id=eq.7&seq=eq.99&select=journal_id,comment,journals(id,title,start_time,result)');
-    if (!r.ok) throw new Error(await r.text());
-    const rows = await r.json();
-    // build tag -> [{journal}] map
-    const tagMap = {};
-    rows.forEach(row => {
-      let tags = [];
-      try { tags = JSON.parse(row.comment || '[]'); } catch {}
-      tags.forEach(tag => {
-        if (!tagMap[tag]) tagMap[tag] = [];
-        tagMap[tag].push({ ...row.journals, tagRowJournalId: row.journal_id });
-      });
-    });
-    return tagMap;
-  } catch(e) { return {}; }
-}
-
-let tagMap = {};
-
-async function showTagSection() {
-  const section = document.getElementById('tag-section');
-  const cloud = document.getElementById('tag-filter-cloud');
-  section.style.display = 'block';
-  cloud.innerHTML = '<span style="font-size:12px;color:var(--text3)">불러오는 중...</span>';
-  tagMap = await loadAllTags();
-  renderTagCloud();
-}
-
-function renderTagCloud() {
-  const cloud = document.getElementById('tag-filter-cloud');
-  const tags = Object.keys(tagMap);
-  if (!tags.length) {
-    cloud.innerHTML = '<span style="font-size:12px;color:var(--text3)">복기에 태그를 추가하면 여기에 표시됩니다</span>';
-    document.getElementById('tag-filtered-list').innerHTML = '';
-    return;
-  }
-  cloud.innerHTML = tags.sort().map(tag =>
-    `<div class="tag-filter-chip ${activeTag===tag?'active':''}" onclick="selectTag('${tag}')">
-      #${tag}
-      <span class="tag-count">${tagMap[tag].length}</span>
-    </div>`
-  ).join('');
-  if (activeTag && tagMap[activeTag]) renderTagJournals(activeTag);
-  else document.getElementById('tag-filtered-list').innerHTML = '';
-}
-
-function selectTag(tag) {
-  activeTag = (activeTag === tag) ? null : tag;
-  renderTagCloud();
-}
-
-function renderTagJournals(tag) {
-  const journals = tagMap[tag] || [];
-  const list = document.getElementById('tag-filtered-list');
-  if (!journals.length) { list.innerHTML = ''; return; }
-  list.innerHTML = `
-    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;font-weight:600">#${tag} 관련 매매일지 ${journals.length}개</div>
-    ${journals.map(j => {
-      const date = new Date(j.start_time).toLocaleDateString('ko-KR', { month:'2-digit', day:'2-digit' });
-      const wlColor = j.result==='win' ? 'var(--green)' : j.result==='loss' ? 'var(--red)' : 'var(--text3)';
-      const wlText  = j.result==='win' ? '승' : j.result==='loss' ? '패' : j.result==='be' ? 'B/E' : '';
-      return `<div class="tag-journal-item" onclick="openDetail('${j.id}')">
-        ${wlText ? `<span style="font-size:11px;font-weight:700;color:${wlColor};min-width:24px">${wlText}</span>` : '<span style="min-width:24px"></span>'}
-        <div class="tag-journal-title">${j.title}</div>
-        <div class="tag-journal-date">${date}</div>
-      </div>`;
-    }).join('')}`;
-}
-
-let reviewPasteTarget = null;
-function setReviewPasteTarget(jid) {
-  reviewPasteTarget = jid;
-  document.querySelectorAll('.review-paste-zone').forEach(z => z.classList.remove('active'));
-  document.getElementById('rpz-' + jid)?.classList.add('active');
-}
-
-function reviewPrev(jid) {
-  if (reviewState[jid] && reviewState[jid].stackIdx > 0) {
-    reviewState[jid].stackIdx--;
-    renderReview(jid);
-  }
-}
-function reviewNext(jid) {
-  const rs = reviewState[jid];
-  if (rs && rs.stackIdx < rs.imgs.length - 1) {
-    rs.stackIdx++;
-    renderReview(jid);
-  }
-}
-
-async function reviewDelImg(jid, rowId, imgUrl) {
-  if (!confirm('이 이미지를 삭제할까요?')) return;
-  try {
-    await sbFetch(`/rest/v1/journal_parts?id=eq.${rowId}`, { method: 'DELETE' });
-    await deleteStorageFile(imgUrl);
-    const rs = reviewState[jid];
-    rs.imgs = rs.imgs.filter(x => x.id !== rowId);
-    rs.stackIdx = Math.max(0, rs.imgs.length - 1);
-    renderReview(jid);
-    toast('삭제됨', 'inf');
-  } catch(e) { toast('삭제 실패: ' + e.message, 'err'); }
-}
-
-function startEditReview(jid) {
-  if (reviewState[jid]) { reviewState[jid].editing = true; renderReview(jid); }
-  setTimeout(() => document.getElementById('review-text-' + jid)?.focus(), 50);
-}
-
-async function saveReviewText(jid) {
-  const val = document.getElementById('review-text-' + jid)?.value || '';
-  const rs = reviewState[jid];
-  rs.text = val;
-  rs.editing = false;
-  try {
-    if (rs.textRowId) {
-      await sbFetch(`/rest/v1/journal_parts?id=eq.${rs.textRowId}`, {
-        method: 'PATCH', body: JSON.stringify({ comment: val })
-      });
-    } else {
-      const r = await sbFetch('/rest/v1/journal_parts', {
-        method: 'POST',
-        body: JSON.stringify({ journal_id: jid, part_id: 7, image_path: null, comment: val, seq: 0 })
-      });
-      const row = (await r.json())[0];
-      rs.textRowId = row.id;
-    }
-    toast('복기 저장됨 ✓', 'ok');
-  } catch(e) { toast('저장 실패: ' + e.message, 'err'); }
-  renderReview(jid);
-}
-
-// Paste handler — check if review is active target
-const _origPaste = document.onpaste;
-document.addEventListener('paste', async e => {
-  if (!reviewPasteTarget) return;
-  // only if modal is open
-  if (!document.getElementById('detail-modal').classList.contains('open')) { reviewPasteTarget = null; return; }
-  const item = [...e.clipboardData.items].find(i => i.type.startsWith('image/'));
-  if (!item) return;
-  e.stopImmediatePropagation(); // prevent regular paste handler
-  const jid = reviewPasteTarget;
-  const rs = reviewState[jid];
-  if (!rs) return;
-  rs.uploading = true;
-  renderReview(jid);
-  try {
-    const file = item.getAsFile();
-    const blob = await compressFile(file);
-    const seq = rs.imgs.length;
-    const imageUrl = await uploadBlob(blob, jid, 7, seq);
-    const r = await sbFetch('/rest/v1/journal_parts', {
-      method: 'POST',
-      body: JSON.stringify({ journal_id: jid, part_id: 7, image_path: imageUrl, comment: '', seq })
-    });
-    const row = (await r.json())[0];
-    rs.imgs.push({ id: row.id, image_path: imageUrl, seq });
-    rs.stackIdx = rs.imgs.length - 1;
-    toast('복기 이미지 업로드 완료 ✓', 'ok');
-  } catch(err) { toast('업로드 실패: ' + err.message, 'err'); }
-  finally { rs.uploading = false; renderReview(jid); }
-}, true); // capture phase so it runs before regular paste
-
-function closeModal() { document.getElementById('detail-modal').classList.remove('open'); reviewPasteTarget = null; }
-
-// ═══════════════════════════════════
-//  LIGHTBOX
-// ═══════════════════════════════════
-function openLightbox(src) { document.getElementById('lb-img').src = src; document.getElementById('lightbox').classList.add('open'); }
-function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeLightbox(); closeModal(); closeMindsetModal(); } });
-
-// ═══════════════════════════════════
-//  INIT
-// ═══════════════════════════════════
-function init() {
-  document.getElementById('setup-screen').style.display = 'none';
-  updateMindsetBar();
-  renderParts();
-}
-
-if (SB_URL && SB_KEY) { init(); }
-else { document.getElementById('inp-url').value = SB_URL; document.getElementById('inp-key').value = SB_KEY; }
+  // Listeners
+  ['totalAsset','entryPrice','stopPrice','riskAmount','riskPercent'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calc);
+  });
 </script>
 </body>
 </html>
